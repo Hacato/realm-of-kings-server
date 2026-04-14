@@ -3,21 +3,26 @@ FROM ubuntu:22.04
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
+    git \
+    cmake \
+    g++ \
+    make \
     libevent-dev \
+    zlib1g-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /server
 
-# Download prebuilt server binary (stable runtime approach)
-RUN wget -O ygopro-server https://github.com/edo9300/ygopro-server/releases/latest/download/ygopro-server || true
+# Clone server source
+RUN git clone --depth=1 https://github.com/edo9300/ygopro-server.git .
 
-RUN chmod +x ygopro-server || true
+# Build proper Linux binary
+RUN cmake .
+RUN make
 
-# Fallback safety message
-RUN echo "Server binary step completed"
+# Create expansions folder
+RUN mkdir -p /server/expansions
 
 EXPOSE 27017
 
