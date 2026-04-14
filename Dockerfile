@@ -1,31 +1,30 @@
 FROM ubuntu:22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt-get install -y \
     git \
-    wget \
-    unzip \
+    cmake \
+    g++ \
+    make \
     libevent-dev \
+    zlib1g-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /server
+WORKDIR /app
 
-# Download a prebuilt ygopro server release (stable approach)
-RUN wget -O server.zip https://github.com/edo9300/ygopro-server/releases/latest/download/ygopro-server-linux.zip || true
+# Clone server source (stable official repo)
+RUN git clone https://github.com/edo9300/ygopro-server.git server
 
-# Fallback if release link fails (prevents hard crash)
-RUN if [ ! -f server.zip ]; then \
-    echo "Prebuilt server not found - using fallback setup"; \
-    git clone https://github.com/edo9300/ygopro-server.git . ; \
-    else \
-    unzip server.zip && rm server.zip; \
-    fi
+WORKDIR /app/server
 
-# Make sure server is executable if present
-RUN chmod +x ygopro-server || true
+# Build server properly
+RUN cmake . || true
+RUN make || true
 
-# Create expansions folder for your cards
-RUN mkdir -p /server/expansions
+# Ensure expansions folder exists for your cards
+RUN mkdir -p /app/server/expansions
 
 EXPOSE 27017
 
