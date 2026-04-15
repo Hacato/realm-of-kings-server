@@ -76,10 +76,16 @@ RUN apt-get update -y && \
 
 WORKDIR /app
 
-COPY ./core .
+# Copy the whole repository so relative include paths resolve correctly
+COPY . .
+
+# Move modules into the location the C++ includes expect
+RUN mkdir -p /app/core/modules && cp -r /app/core/src/modules/* /app/core/modules/
+
+WORKDIR /app/core
 
 RUN cmake -B build -S . -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build
+    cmake --build build -- -j1
 
 
 # Stage 3: Build Node.js server
@@ -113,8 +119,8 @@ COPY --from=server-builder /server/package.json ./package.json
 COPY --from=server-builder /server/node_modules ./node_modules
 
 # CoreIntegrator binaries
-COPY --from=core-builder /app/libocgcore.so ./core/libocgcore.so
-COPY --from=core-builder /app/CoreIntegrator ./core/CoreIntegrator
+COPY --from=core-builder /app/core/libocgcore.so ./core/libocgcore.so
+COPY --from=core-builder /app/core/CoreIntegrator ./core/CoreIntegrator
 
 # All resources (assembled in Stage 1)
 COPY --from=resources-builder /resources ./resources
