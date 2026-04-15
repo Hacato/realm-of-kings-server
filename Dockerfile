@@ -1,4 +1,5 @@
 FROM ubuntu:22.04
+RUN echo "force rebuild v2"
 
 ENV DEBIAN_FRONTEND=noninteractive
 
